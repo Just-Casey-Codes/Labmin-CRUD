@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const app = express();
 
-const distPath = path.join(__dirname, '../dist/labmin-app');
+const distPath = path.join(__dirname, '../dist/labmin-app/browser');
 console.log('Dist exists?', fs.existsSync(distPath));
 
 app.use(express.static(distPath));
