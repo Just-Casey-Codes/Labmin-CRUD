@@ -17,14 +17,11 @@ app.get('/api/test', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
-// Serve Angular build
 const distPath = path.join(__dirname, '../dist/labmin-app/browser');
-console.log('Dist exists?', fs.existsSync(distPath));
+console.log('Dist exists??', fs.existsSync(distPath));
 
 app.use(express.static(distPath));
 
-// Angular catch-all LAST (for client-side routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
