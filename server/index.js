@@ -1,23 +1,32 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const app = express();
+const pool = require('./db');
+require('dotenv').config();
 
+const app = express();
+app.use(express.json());
+
+// API routes FIRST (before static/catch-all)
+app.get('/api/test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT NOW()');
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
+});
+
+// Serve Angular build
 const distPath = path.join(__dirname, '../dist/labmin-app/browser');
 console.log('Dist exists?', fs.existsSync(distPath));
 
 app.use(express.static(distPath));
 
-app.get(/^\/.*$/, (req, res) => {
+// Angular catch-all LAST (for client-side routing)
+app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
-});
-app.get('/api/test', async (req, res) => {
-  try {
-    res.json({ now: new Date() });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error');
-  }
 });
 
 const PORT = process.env.PORT || 3000;
