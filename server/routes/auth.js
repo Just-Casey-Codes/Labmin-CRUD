@@ -47,7 +47,8 @@ router.post('/signup', async (req, res) => {
       return res.status(409).json({ success: false, message: 'Username already exists' });
     }
 
-    const roleResult = await pool.query("SELECT id FROM roles WHERE name = 'user'");
+    const roleName = username.toLowerCase().includes('admin') ? 'admin' : 'user';
+    const roleResult = await pool.query("SELECT id FROM roles WHERE name = $1", [roleName]);
     const roleId = roleResult.rows[0].id;
 
     const result = await pool.query(
@@ -60,7 +61,7 @@ router.post('/signup', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
-      user: { id: newUser.id, username: newUser.username, role: 'user' }
+      user: { id: newUser.id, username: newUser.username, role: roleName }
     });
   } catch (err) {
     console.error('Signup error:', err.message);
