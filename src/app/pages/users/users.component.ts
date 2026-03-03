@@ -65,7 +65,6 @@ export class UsersComponent implements OnInit {
       next: () => {
         this.cancelEdit();
         this.loadUsers();
-        // If admin edited themselves, refresh session
         const currentUser = this.authService.user();
         if (currentUser && currentUser.id === id) {
           this.authService.refreshCurrentUser();

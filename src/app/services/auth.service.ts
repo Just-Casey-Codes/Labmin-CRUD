@@ -32,33 +32,6 @@ export class AuthService {
     }
   }
 
-  login(username: string, password: string): void {
-    this.http.post<AuthResponse>('/api/auth/login', { username, password }).subscribe({
-      next: (res) => {
-        if (res.success && res.user) {
-          const user: User = {
-            id: res.user.id,
-            username: res.user.username,
-            role: res.user.role as User['role']
-          };
-          this.currentUser.set(user);
-          localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
-          this._lastResult = { success: true, message: res.message };
-        }
-      },
-      error: (err) => {
-        this._lastResult = {
-          success: false,
-          message: err.error?.message || 'Login failed'
-        };
-      }
-    });
-  }
-
-  // Synchronous login/signup won't work well with HTTP calls.
-  // Let's use a callback-based approach instead.
-  private _lastResult: { success: boolean; message: string } | null = null;
-
   loginAsync(username: string, password: string): Promise<{ success: boolean; message: string }> {
     return new Promise((resolve) => {
       this.http.post<AuthResponse>('/api/auth/login', { username, password }).subscribe({
@@ -111,8 +84,6 @@ export class AuthService {
   refreshCurrentUser(): void {
     const current = this.currentUser();
     if (current) {
-      // Re-fetch fresh user data from the server is not needed here
-      // since we update from the API responses. Session stays local.
       localStorage.setItem(this.SESSION_KEY, JSON.stringify(current));
     }
   }
