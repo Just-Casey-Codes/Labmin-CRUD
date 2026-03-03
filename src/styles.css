@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-purple-dark: #110b1a;
+  --color-purple-card: #1a1025;
+  --color-purple-hover: #251538;
+  --color-orange-primary: #f97316;
+  --color-orange-light: #fb923c;
+}
+
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #110b1a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #fb923c;
+}
