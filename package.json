@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "node server/index.js",
+    "start": "node server/migrate.js && node server/index.js",
     "build": "ng build --configuration production",
     "postinstall": "npm run build || echo 'Build failed, using pre-built dist'",
     "watch": "ng build --watch --configuration development",

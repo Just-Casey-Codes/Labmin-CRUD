@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// GET /api/users — list all users
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(
@@ -18,13 +17,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT /api/users/:id — update a user
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { username, role } = req.body;
 
-    // Look up the role_id from the role name
     if (role) {
       const roleResult = await pool.query('SELECT id FROM roles WHERE name = $1', [role]);
       if (roleResult.rows.length === 0) {
@@ -46,7 +43,6 @@ router.put('/:id', async (req, res) => {
       await pool.query('UPDATE users SET username = $1 WHERE id = $2', [username, id]);
     }
 
-    // Return the updated user
     const result = await pool.query(
       `SELECT u.id, u.username, r.name as role
        FROM users u
@@ -66,7 +62,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id — delete a user
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;

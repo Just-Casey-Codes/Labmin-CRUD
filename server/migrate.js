@@ -8,8 +8,6 @@ async function migrate() {
 
   try {
     console.log('Running migrations...');
-
-    // Create roles table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS roles (
         id SERIAL PRIMARY KEY,
@@ -17,8 +15,6 @@ async function migrate() {
       );
     `);
     console.log('✓ roles table created');
-
-    // Seed default roles
     await pool.query(`
       INSERT INTO roles (name)
       VALUES ('admin'), ('user'), ('guest')
@@ -26,7 +22,6 @@ async function migrate() {
     `);
     console.log('✓ roles seeded (admin, user, guest)');
 
-    // Create users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -38,7 +33,6 @@ async function migrate() {
     `);
     console.log('✓ users table created');
 
-    // Seed default admin user (role_id 1 = admin)
     const existing = await pool.query(`SELECT id FROM users WHERE username = 'admin'`);
     if (existing.rows.length === 0) {
       await pool.query(`

@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -24,7 +23,6 @@ router.post('/login', async (req, res) => {
     }
 
     const user = result.rows[0];
-    // Don't send password back to client
     res.json({
       success: true,
       message: 'Login successful',
@@ -36,7 +34,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// POST /api/auth/signup
 router.post('/signup', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -45,13 +42,11 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please fill in all fields' });
     }
 
-    // Check if username exists
     const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ success: false, message: 'Username already exists' });
     }
 
-    // Default role is 'user' (role_id = 2)
     const roleResult = await pool.query("SELECT id FROM roles WHERE name = 'user'");
     const roleId = roleResult.rows[0].id;
 
