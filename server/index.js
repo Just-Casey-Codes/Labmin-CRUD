@@ -18,7 +18,7 @@ app.get('/api/test', async (req, res) => {
   }
 });
 const distPath = path.join(__dirname, '../dist/labmin-app/browser');
-console.log('Dist exists??', fs.existsSync(distPath));
+console.log('Dist exists?', fs.existsSync(distPath));
 
 app.use(express.static(distPath));
 
