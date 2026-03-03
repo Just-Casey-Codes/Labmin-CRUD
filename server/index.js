@@ -19,7 +19,7 @@ app.get('/api/test', async (req, res) => {
 
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../dist/labmin-app')));
-app.get('/*', (req, res) => {
+app.get(/^\/.*$/, (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/labmin-app/index.html'));
 });
 
