@@ -1,19 +1,26 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { User } from '../models/user.model';
-import { UserService } from './user.service';
+
+interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: { id: number; username: string; role: string };
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly SESSION_KEY = 'labmin_session';
+  private http = inject(HttpClient);
   private currentUser = signal<User | null>(null);
 
   readonly user = this.currentUser.asReadonly();
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
   readonly isAdmin = computed(() => this.currentUser()?.role === 'admin');
 
-  constructor(private userService: UserService) {
+  constructor() {
     this.loadSession();
   }
 
@@ -21,36 +28,79 @@ export class AuthService {
     const data = localStorage.getItem(this.SESSION_KEY);
     if (data) {
       const sessionUser: User = JSON.parse(data);
-      // Re-fetch from store to get latest data
-      const freshUser = this.userService.getUserById(sessionUser.id);
-      if (freshUser) {
-        this.currentUser.set(freshUser);
-      } else {
-        localStorage.removeItem(this.SESSION_KEY);
+      this.currentUser.set(sessionUser);
+    }
+  }
+
+  login(username: string, password: string): void {
+    this.http.post<AuthResponse>('/api/auth/login', { username, password }).subscribe({
+      next: (res) => {
+        if (res.success && res.user) {
+          const user: User = {
+            id: res.user.id,
+            username: res.user.username,
+            role: res.user.role as User['role']
+          };
+          this.currentUser.set(user);
+          localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
+          this._lastResult = { success: true, message: res.message };
+        }
+      },
+      error: (err) => {
+        this._lastResult = {
+          success: false,
+          message: err.error?.message || 'Login failed'
+        };
       }
-    }
+    });
   }
 
-  login(username: string, password: string): { success: boolean; message: string } {
-    const users = this.userService.getUsers();
-    const user = users.find(u => u.username === username && u.password === password);
-    if (user) {
-      this.currentUser.set(user);
-      localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
-      return { success: true, message: 'Login successful' };
-    }
-    return { success: false, message: 'Invalid username or password' };
+  // Synchronous login/signup won't work well with HTTP calls.
+  // Let's use a callback-based approach instead.
+  private _lastResult: { success: boolean; message: string } | null = null;
+
+  loginAsync(username: string, password: string): Promise<{ success: boolean; message: string }> {
+    return new Promise((resolve) => {
+      this.http.post<AuthResponse>('/api/auth/login', { username, password }).subscribe({
+        next: (res) => {
+          if (res.success && res.user) {
+            const user: User = {
+              id: res.user.id,
+              username: res.user.username,
+              role: res.user.role as User['role']
+            };
+            this.currentUser.set(user);
+            localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
+          }
+          resolve({ success: res.success, message: res.message });
+        },
+        error: (err) => {
+          resolve({ success: false, message: err.error?.message || 'Login failed' });
+        }
+      });
+    });
   }
 
-  signup(username: string, password: string): { success: boolean; message: string } {
-    const users = this.userService.getUsers();
-    if (users.find(u => u.username === username)) {
-      return { success: false, message: 'Username already exists' };
-    }
-    const newUser = this.userService.createUser(username, password);
-    this.currentUser.set(newUser);
-    localStorage.setItem(this.SESSION_KEY, JSON.stringify(newUser));
-    return { success: true, message: 'Account created successfully' };
+  signupAsync(username: string, password: string): Promise<{ success: boolean; message: string }> {
+    return new Promise((resolve) => {
+      this.http.post<AuthResponse>('/api/auth/signup', { username, password }).subscribe({
+        next: (res) => {
+          if (res.success && res.user) {
+            const user: User = {
+              id: res.user.id,
+              username: res.user.username,
+              role: res.user.role as User['role']
+            };
+            this.currentUser.set(user);
+            localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
+          }
+          resolve({ success: res.success, message: res.message });
+        },
+        error: (err) => {
+          resolve({ success: false, message: err.error?.message || 'Signup failed' });
+        }
+      });
+    });
   }
 
   logout(): void {
@@ -61,11 +111,9 @@ export class AuthService {
   refreshCurrentUser(): void {
     const current = this.currentUser();
     if (current) {
-      const freshUser = this.userService.getUserById(current.id);
-      if (freshUser) {
-        this.currentUser.set(freshUser);
-        localStorage.setItem(this.SESSION_KEY, JSON.stringify(freshUser));
-      }
+      // Re-fetch fresh user data from the server is not needed here
+      // since we update from the API responses. Session stays local.
+      localStorage.setItem(this.SESSION_KEY, JSON.stringify(current));
     }
   }
 }

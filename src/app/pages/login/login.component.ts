@@ -33,7 +33,7 @@ export class LoginComponent {
     this.successMessage.set('');
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     const u = this.username().trim();
     const p = this.password().trim();
 
@@ -43,14 +43,14 @@ export class LoginComponent {
     }
 
     if (this.isSignup()) {
-      const result = this.authService.signup(u, p);
+      const result = await this.authService.signupAsync(u, p);
       if (result.success) {
         this.router.navigate(['/users']);
       } else {
         this.errorMessage.set(result.message);
       }
     } else {
-      const result = this.authService.login(u, p);
+      const result = await this.authService.loginAsync(u, p);
       if (result.success) {
         this.router.navigate(['/users']);
       } else {

@@ -1,83 +1,27 @@
-import { Injectable } from '@angular/core';
-import { User } from '../models/user.model';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { User, Role } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private readonly STORAGE_KEY = 'labmin_users';
+  private http = inject(HttpClient);
 
-  constructor() {
-    this.seedDefaultAdmin();
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>('/api/users');
   }
 
-  private seedDefaultAdmin(): void {
-    const users = this.getUsers();
-    if (users.length === 0) {
-      const admin: User = {
-        id: this.generateId(),
-        username: 'admin',
-        password: 'admin123',
-        role: 'admin'
-      };
-      this.saveUsers([admin]);
-    }
+  getRoles(): Observable<Role[]> {
+    return this.http.get<Role[]>('/api/roles');
   }
 
-  getUsers(): User[] {
-    const data = localStorage.getItem(this.STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+  updateUser(id: number, updates: { username?: string; role?: string }): Observable<User> {
+    return this.http.put<User>(`/api/users/${id}`, updates);
   }
 
-  getUserById(id: string): User | undefined {
-    return this.getUsers().find(u => u.id === id);
-  }
-
-  createUser(username: string, password: string): User {
-    const users = this.getUsers();
-    const role: 'admin' | 'user' = username.toLowerCase().includes('admin') ? 'admin' : 'user';
-    const newUser: User = {
-      id: this.generateId(),
-      username,
-      password,
-      role
-    };
-    users.push(newUser);
-    this.saveUsers(users);
-    return newUser;
-  }
-
-  updateUser(id: string, updates: Partial<Pick<User, 'username' | 'role'>>): User | undefined {
-    const users = this.getUsers();
-    const index = users.findIndex(u => u.id === id);
-    if (index === -1) return undefined;
-
-    if (updates.username !== undefined) {
-      users[index].username = updates.username;
-      // Re-evaluate role based on new username
-      users[index].role = updates.username.toLowerCase().includes('admin') ? 'admin' : 'user';
-    }
-    if (updates.role !== undefined) {
-      users[index].role = updates.role;
-    }
-
-    this.saveUsers(users);
-    return users[index];
-  }
-
-  deleteUser(id: string): boolean {
-    const users = this.getUsers();
-    const filtered = users.filter(u => u.id !== id);
-    if (filtered.length === users.length) return false;
-    this.saveUsers(filtered);
-    return true;
-  }
-
-  private saveUsers(users: User[]): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(users));
-  }
-
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  deleteUser(id: number): Observable<{ success: boolean }> {
+    return this.http.delete<{ success: boolean }>(`/api/users/${id}`);
   }
 }

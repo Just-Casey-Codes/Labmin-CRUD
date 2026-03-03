@@ -1,6 +1,11 @@
 export interface User {
-  id: string;
+  id: number;
   username: string;
-  password: string;
-  role: 'admin' | 'user';
+  password?: string;
+  role: 'admin' | 'user' | 'guest';
+}
+
+export interface Role {
+  id: number;
+  name: string;
 }

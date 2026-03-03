@@ -7,7 +7,16 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
-// API routes FIRST (before static/catch-all)
+// API routes
+const authRoutes = require('./routes/auth');
+const usersRoutes = require('./routes/users');
+const rolesRoutes = require('./routes/roles');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/roles', rolesRoutes);
+
+// Keep /api/test for quick health checks
 app.get('/api/test', async (req, res) => {
   try {
     if (!pool) {
@@ -21,21 +30,8 @@ app.get('/api/test', async (req, res) => {
   }
 });
 
+// Serve Angular static files
 const distPath = path.join(__dirname, '../dist/labmin-app/browser');
-console.log('Dist path:', distPath);
-console.log('Dist exists?', fs.existsSync(distPath));
-
-// List files in dist for debugging
-if (fs.existsSync(distPath)) {
-  console.log('Dist contents:', fs.readdirSync(distPath));
-} else {
-  console.log('WARNING: dist folder not found! Checking parent...');
-  const parentDist = path.join(__dirname, '../dist');
-  if (fs.existsSync(parentDist)) {
-    console.log('Parent dist contents:', fs.readdirSync(parentDist));
-  }
-}
-
 app.use(express.static(distPath));
 
 app.get('/{*path}', (req, res) => {

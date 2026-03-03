@@ -45,8 +45,9 @@
                       name="editRole"
                       class="px-3 py-2 rounded-lg border border-blue-200 dark:border-orange-500/30 bg-white dark:bg-[#110b1a] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-orange-500 transition-all text-sm"
                     >
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
+                      @for (role of roles(); track role.id) {
+                        <option [value]="role.name">{{ role.name }}</option>
+                      }
                     </select>
                   </td>
                   <td class="px-6 py-4 text-right">
@@ -71,7 +72,9 @@
                       <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white uppercase"
                         [class]="user.role === 'admin'
                           ? 'bg-blue-500 dark:bg-orange-500'
-                          : 'bg-gray-400 dark:bg-gray-600'"
+                          : user.role === 'guest'
+                            ? 'bg-orange-400 dark:bg-yellow-600'
+                            : 'bg-gray-400 dark:bg-gray-600'"
                       >
                         {{ user.username.charAt(0) }}
                       </div>
@@ -82,7 +85,9 @@
                     <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold"
                       [class]="user.role === 'admin'
                         ? 'bg-blue-100 dark:bg-orange-500/15 text-blue-700 dark:text-orange-400 border border-blue-200 dark:border-orange-500/30'
-                        : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600'"
+                        : user.role === 'guest'
+                          ? 'bg-orange-50 dark:bg-yellow-500/15 text-orange-600 dark:text-yellow-400 border border-orange-200 dark:border-yellow-500/30'
+                          : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600'"
                     >
                       {{ user.role }}
                     </span>

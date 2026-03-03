@@ -1,8 +1,8 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
-import { User } from '../../models/user.model';
+import { User, Role } from '../../models/user.model';
 import { NavbarComponent } from '../../components/navbar/navbar.component';
 
 @Component({
@@ -11,23 +11,35 @@ import { NavbarComponent } from '../../components/navbar/navbar.component';
   imports: [FormsModule, NavbarComponent],
   templateUrl: './users.component.html'
 })
-export class UsersComponent {
+export class UsersComponent implements OnInit {
   private authService = inject(AuthService);
   private userService = inject(UserService);
 
   users = signal<User[]>([]);
-  editingUserId = signal<string | null>(null);
+  roles = signal<Role[]>([]);
+  editingUserId = signal<number | null>(null);
   editUsername = signal('');
-  editRole = signal<'admin' | 'user'>('user');
+  editRole = signal('user');
 
   isAdmin = this.authService.isAdmin;
 
-  constructor() {
+  ngOnInit(): void {
     this.loadUsers();
+    this.loadRoles();
   }
 
   loadUsers(): void {
-    this.users.set(this.userService.getUsers());
+    this.userService.getUsers().subscribe({
+      next: (users) => this.users.set(users),
+      error: (err) => console.error('Failed to load users:', err)
+    });
+  }
+
+  loadRoles(): void {
+    this.userService.getRoles().subscribe({
+      next: (roles) => this.roles.set(roles),
+      error: (err) => console.error('Failed to load roles:', err)
+    });
   }
 
   startEdit(user: User): void {
@@ -42,23 +54,33 @@ export class UsersComponent {
     this.editRole.set('user');
   }
 
-  saveEdit(id: string): void {
+  saveEdit(id: number): void {
     const newUsername = this.editUsername().trim();
     if (!newUsername) return;
 
     this.userService.updateUser(id, {
       username: newUsername,
       role: this.editRole()
+    }).subscribe({
+      next: () => {
+        this.cancelEdit();
+        this.loadUsers();
+        // If admin edited themselves, refresh session
+        const currentUser = this.authService.user();
+        if (currentUser && currentUser.id === id) {
+          this.authService.refreshCurrentUser();
+        }
+      },
+      error: (err) => console.error('Failed to update user:', err)
     });
-    this.cancelEdit();
-    this.loadUsers();
-    this.authService.refreshCurrentUser();
   }
 
-  deleteUser(id: string): void {
+  deleteUser(id: number): void {
     if (confirm('Are you sure you want to delete this user?')) {
-      this.userService.deleteUser(id);
-      this.loadUsers();
+      this.userService.deleteUser(id).subscribe({
+        next: () => this.loadUsers(),
+        error: (err) => console.error('Failed to delete user:', err)
+      });
     }
   }
 }
