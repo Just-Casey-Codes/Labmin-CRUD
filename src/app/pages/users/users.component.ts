@@ -65,10 +65,6 @@ export class UsersComponent implements OnInit {
       next: () => {
         this.cancelEdit();
         this.loadUsers();
-        const currentUser = this.authService.user();
-        if (currentUser && currentUser.id === id) {
-          this.authService.refreshCurrentUser();
-        }
       },
       error: (err) => console.error('Failed to update user:', err)
     });

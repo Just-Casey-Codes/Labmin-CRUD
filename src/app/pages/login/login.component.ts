@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -11,17 +11,17 @@ import { ThemeService } from '../../services/theme.service';
   templateUrl: './login.component.html'
 })
 export class LoginComponent {
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  readonly themeService = inject(ThemeService);
+
   isSignup = signal(false);
   email = signal('');
   password = signal('');
   errorMessage = signal('');
   successMessage = signal('');
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    public themeService: ThemeService
-  ) {
+  constructor() {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/users']);
     }
