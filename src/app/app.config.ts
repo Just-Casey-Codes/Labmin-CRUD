@@ -19,3 +19,4 @@ export const appConfig: ApplicationConfig = {
     provideFirestore(() => getFirestore()),
   ]
 };
+console.log('Firebase config:', environment.firebase);
