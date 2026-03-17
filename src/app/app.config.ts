@@ -14,9 +14,12 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirebaseApp(() => {
+      const app = initializeApp(environment.firebase);
+      return app;
+    }),
     provideAuth(() => getAuth()),
     provideFirestore(() => getFirestore()),
   ]
 };
-console.log('Firebase config:', environment.firebase);
+
