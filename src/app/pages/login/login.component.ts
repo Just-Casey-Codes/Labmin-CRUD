@@ -12,7 +12,7 @@ import { ThemeService } from '../../services/theme.service';
 })
 export class LoginComponent {
   isSignup = signal(false);
-  username = signal('');
+  email = signal('');
   password = signal('');
   errorMessage = signal('');
   successMessage = signal('');
@@ -34,23 +34,23 @@ export class LoginComponent {
   }
 
   async onSubmit(): Promise<void> {
-    const u = this.username().trim();
+    const e = this.email().trim();
     const p = this.password().trim();
 
-    if (!u || !p) {
+    if (!e || !p) {
       this.errorMessage.set('Please fill in all fields');
       return;
     }
 
     if (this.isSignup()) {
-      const result = await this.authService.signupAsync(u, p);
+      const result = await this.authService.signupAsync(e, p);
       if (result.success) {
         this.router.navigate(['/users']);
       } else {
         this.errorMessage.set(result.message);
       }
     } else {
-      const result = await this.authService.loginAsync(u, p);
+      const result = await this.authService.loginAsync(e, p);
       if (result.success) {
         this.router.navigate(['/users']);
       } else {

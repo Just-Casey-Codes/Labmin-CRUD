@@ -33,6 +33,20 @@ async function migrate() {
     `);
     console.log('✓ users table created');
 
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'users' AND column_name = 'firebase_uid'
+        ) THEN
+          ALTER TABLE users ADD COLUMN firebase_uid VARCHAR(128) UNIQUE;
+        END IF;
+      END $$;
+    `);
+    console.log('✓ firebase_uid column ensured on users table');
+
+
     const existing = await pool.query(`SELECT id FROM users WHERE username = 'admin'`);
     if (existing.rows.length === 0) {
       await pool.query(`

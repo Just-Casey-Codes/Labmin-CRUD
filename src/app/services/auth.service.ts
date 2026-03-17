@@ -1,90 +1,89 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { User } from '../models/user.model';
+import { Auth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, User as FirebaseUser } from '@angular/fire/auth';
+import { firstValueFrom } from 'rxjs';
 
-interface AuthResponse {
-  success: boolean;
-  message: string;
-  user?: { id: number; username: string; role: string };
+export interface AppUser {
+  uid: string;
+  email: string;
+  role: 'admin' | 'user' | 'guest';
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly SESSION_KEY = 'labmin_session';
+  private auth = inject(Auth);
   private http = inject(HttpClient);
-  private currentUser = signal<User | null>(null);
+  private currentUser = signal<AppUser | null>(null);
 
   readonly user = this.currentUser.asReadonly();
   readonly isLoggedIn = computed(() => this.currentUser() !== null);
   readonly isAdmin = computed(() => this.currentUser()?.role === 'admin');
 
   constructor() {
-    this.loadSession();
+    onAuthStateChanged(this.auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const role = this.deriveRole(firebaseUser.email ?? '');
+        this.currentUser.set({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          role
+        });
+      } else {
+        this.currentUser.set(null);
+      }
+    });
   }
 
-  private loadSession(): void {
-    const data = localStorage.getItem(this.SESSION_KEY);
-    if (data) {
-      const sessionUser: User = JSON.parse(data);
-      this.currentUser.set(sessionUser);
+  private deriveRole(email: string): AppUser['role'] {
+    if (email.includes('admin')) return 'admin';
+    if (email.includes('guest')) return 'guest';
+    return 'user';
+  }
+
+  async loginAsync(email: string, password: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await signInWithEmailAndPassword(this.auth, email, password);
+      await this.syncUser();
+      return { success: true, message: 'Logged in successfully' };
+    } catch (err: any) {
+      return { success: false, message: this.friendlyError(err.code) };
     }
   }
 
-  loginAsync(username: string, password: string): Promise<{ success: boolean; message: string }> {
-    return new Promise((resolve) => {
-      this.http.post<AuthResponse>('/api/auth/login', { username, password }).subscribe({
-        next: (res) => {
-          if (res.success && res.user) {
-            const user: User = {
-              id: res.user.id,
-              username: res.user.username,
-              role: res.user.role as User['role']
-            };
-            this.currentUser.set(user);
-            localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
-          }
-          resolve({ success: res.success, message: res.message });
-        },
-        error: (err) => {
-          resolve({ success: false, message: err.error?.message || 'Login failed' });
-        }
-      });
-    });
+  async signupAsync(email: string, password: string): Promise<{ success: boolean; message: string }> {
+    try {
+      await createUserWithEmailAndPassword(this.auth, email, password);
+      await this.syncUser();
+      return { success: true, message: 'Account created successfully' };
+    } catch (err: any) {
+      return { success: false, message: this.friendlyError(err.code) };
+    }
   }
 
-  signupAsync(username: string, password: string): Promise<{ success: boolean; message: string }> {
-    return new Promise((resolve) => {
-      this.http.post<AuthResponse>('/api/auth/signup', { username, password }).subscribe({
-        next: (res) => {
-          if (res.success && res.user) {
-            const user: User = {
-              id: res.user.id,
-              username: res.user.username,
-              role: res.user.role as User['role']
-            };
-            this.currentUser.set(user);
-            localStorage.setItem(this.SESSION_KEY, JSON.stringify(user));
-          }
-          resolve({ success: res.success, message: res.message });
-        },
-        error: (err) => {
-          resolve({ success: false, message: err.error?.message || 'Signup failed' });
-        }
-      });
-    });
+  async logout(): Promise<void> {
+    await signOut(this.auth);
   }
 
-  logout(): void {
-    this.currentUser.set(null);
-    localStorage.removeItem(this.SESSION_KEY);
+  private async syncUser(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post('/api/auth/sync', {}));
+    } catch (err) {
+      console.warn('User sync failed (non-critical):', err);
+    }
   }
 
-  refreshCurrentUser(): void {
-    const current = this.currentUser();
-    if (current) {
-      localStorage.setItem(this.SESSION_KEY, JSON.stringify(current));
+  private friendlyError(code: string): string {
+    switch (code) {
+      case 'auth/invalid-email':         return 'Please enter a valid email address.';
+      case 'auth/user-not-found':        return 'No account found with that email.';
+      case 'auth/wrong-password':        return 'Incorrect password. Please try again.';
+      case 'auth/invalid-credential':    return 'Incorrect email or password.';
+      case 'auth/email-already-in-use':  return 'An account with this email already exists.';
+      case 'auth/weak-password':         return 'Password must be at least 6 characters.';
+      case 'auth/too-many-requests':     return 'Too many attempts. Please try again later.';
+      default:                           return 'Something went wrong. Please try again.';
     }
   }
 }
