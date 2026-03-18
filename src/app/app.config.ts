@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideFirebaseApp, initializeApp, getApp } from '@angular/fire/app';
 import { getAuth, provideAuth } from '@angular/fire/auth';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 
@@ -14,12 +14,10 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideFirebaseApp(() => {
-      const app = initializeApp(environment.firebase);
-      return app;
-    }),
-    provideAuth(() => getAuth()),
-    provideFirestore(() => getFirestore()),
+
+    provideFirebaseApp(() => initializeApp(environment.firebase)),
+
+    provideAuth(() => getAuth(getApp())),
+    provideFirestore(() => getFirestore(getApp())),
   ]
 };
-
