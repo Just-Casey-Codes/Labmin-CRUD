@@ -15,7 +15,10 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
 
-    provideFirebaseApp(() => initializeApp(environment.firebase)),
+    provideFirebaseApp(() => {
+  console.log('ENV:', environment);
+  return initializeApp(environment.firebase);
+}),
 
     provideAuth(() => getAuth(getApp())),
     provideFirestore(() => getFirestore(getApp())),
