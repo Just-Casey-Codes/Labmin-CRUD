@@ -6,7 +6,7 @@ const { verifyToken, verifyAdmin } = require('../middleware/auth');
 router.get('/', verifyToken, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.username, r.name as role
+      `SELECT u.id, u.username, u.firebase_uid as uid, r.name as role
        FROM users u
        JOIN roles r ON u.role_id = r.id
        ORDER BY u.id`
@@ -45,7 +45,7 @@ router.put('/:id', verifyToken, verifyAdmin, async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT u.id, u.username, r.name as role
+      `SELECT u.id, u.username, u.firebase_uid as uid, r.name as role
        FROM users u
        JOIN roles r ON u.role_id = r.id
        WHERE u.id = $1`,

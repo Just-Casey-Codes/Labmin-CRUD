@@ -32,8 +32,8 @@ export class TaskService {
 
     return addDoc(this.tasksCollection, {
       ...task,
-      userId: user.uid,
-      userEmail: user.email,   
+      userId: task.userId || user.uid,
+      userEmail: task.userEmail || user.email,
       createdAt: new Date()
     });
   }
