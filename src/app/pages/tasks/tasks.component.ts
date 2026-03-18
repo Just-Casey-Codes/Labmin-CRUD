@@ -15,7 +15,8 @@ import { User } from '../../models/user.model';
   imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
   template: `
     <app-navbar />
-    <div class="p-6 max-w-4xl mx-auto dark:text-gray-200">
+    <div class="min-h-screen bg-gray-50 dark:bg-[#110b1a] transition-colors duration-300">
+      <div class="p-6 max-w-4xl mx-auto dark:text-gray-200">
       <h1 class="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Tasks Dashboard</h1>
 
       <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="mb-8 p-4 bg-white dark:bg-[#251538] rounded shadow">
@@ -98,6 +99,7 @@ import { User } from '../../models/user.model';
           <div class="p-4 text-gray-500 dark:text-gray-400 text-center">Loading tasks...</div>
         </ng-template>
       </div>
+    </div>
     </div>
   `
 })
