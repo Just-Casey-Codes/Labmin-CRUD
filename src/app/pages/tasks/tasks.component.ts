@@ -5,12 +5,14 @@ import { TaskService } from '../../services/task.service';
 import { AuthService } from '../../services/auth.service';
 import { Task } from '../../models/task.model';
 import { Observable } from 'rxjs';
+import { NavbarComponent } from '../../components/navbar/navbar.component';
 
 @Component({
   selector: 'app-tasks',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
   template: `
+    <app-navbar />
     <div class="p-6 max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold mb-6 text-gray-800">Tasks Dashboard</h1>
 
@@ -113,10 +115,13 @@ export class TasksComponent implements OnInit {
   async onSubmit() {
     if (this.taskForm.valid) {
       try {
+        const currentUser = this.authService.user();
         const newTask = {
           title: this.taskForm.value.title,
           description: this.taskForm.value.description,
-          status: 'pending' as const
+          status: 'pending' as const,
+          userId: currentUser?.uid || '',
+          userEmail: currentUser?.email || ''
         };
         await this.taskService.addTask(newTask);
         this.taskForm.reset();
