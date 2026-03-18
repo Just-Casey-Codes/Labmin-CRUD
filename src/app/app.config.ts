@@ -17,6 +17,7 @@ export const appConfig: ApplicationConfig = {
 
     provideFirebaseApp(() => {
   console.log('ENV:', environment);
+  console.log('Firebase config runtime:', environment.firebase);
   return initializeApp(environment.firebase);
 }),
 
