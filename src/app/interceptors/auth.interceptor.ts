@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Auth } from '@angular/fire/auth';
-import { from, switchMap } from 'rxjs';
+import { from, of, switchMap } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (!req.url.startsWith('/api/')) {
@@ -10,12 +10,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const auth = inject(Auth);
 
-  return from(auth.currentUser?.getIdToken() ?? Promise.resolve(null)).pipe(
-    switchMap(token => {
-      if (!token) return next(req);
+  const currentUser = auth.currentUser;
 
+  if (!currentUser) {
+    return next(req);
+  }
+
+  return from(currentUser.getIdToken()).pipe(
+    switchMap(token => {
       const authReq = req.clone({
-        setHeaders: { Authorization: `Bearer ${token}` }
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
       });
       return next(authReq);
     })
